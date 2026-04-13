@@ -79,3 +79,22 @@ func TestMerge_NilInputs(t *testing.T) {
 		t.Fatal("expected error for nil inputs")
 	}
 }
+
+func TestMerge_StrategyTheirs_PreservesNonConflicting(t *testing.T) {
+	dst, src := baseMergeSets(t)
+	res, err := Merge(dst, src, MergeStrategyTheirs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Keys only in dst should still be present after a theirs-strategy merge.
+	if v, _ := res.Merged.Get("APP_NAME"); v != "envoy" {
+		t.Errorf("expected APP_NAME='envoy', got %q", v)
+	}
+	if v, _ := res.Merged.Get("PORT"); v != "8080" {
+		t.Errorf("expected PORT='8080', got %q", v)
+	}
+	// New key from src should also be present.
+	if v, _ := res.Merged.Get("DB_URL"); v != "postgres://localhost/db" {
+		t.Errorf("expected DB_URL='postgres://localhost/db', got %q", v)
+	}
+}
