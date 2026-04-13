@@ -41,7 +41,7 @@ func TestSet_ValidKey(t *testing.T) {
 	}
 	v, ok := es.Get("DATABASE_URL")
 	if !ok || v != "postgres://localhost/db" {
-		t.Errorf("expected 'postgres://localhost/db', got '%s'" , v)
+		t.Errorf("expected 'postgres://localhost/db', got '%s'", v)
 	}
 }
 
@@ -72,5 +72,16 @@ func TestKeys(t *testing.T) {
 	keys := es.Keys()
 	if len(keys) != 2 {
 		t.Errorf("expected 2 keys, got %d", len(keys))
+	}
+}
+
+func TestGet_NonExistentKey(t *testing.T) {
+	es, _ := New("myapp", EnvLocal)
+	v, ok := es.Get("DOES_NOT_EXIST")
+	if ok {
+		t.Errorf("expected ok=false for missing key, got ok=true with value '%s'", v)
+	}
+	if v != "" {
+		t.Errorf("expected empty string for missing key, got '%s'", v)
 	}
 }
