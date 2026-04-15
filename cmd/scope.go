@@ -93,6 +93,28 @@ func init() {
 		},
 	}
 
-	scopeCmd.AddCommand(createCmd, listCmd, deleteCmd)
+	showCmd := &cobra.Command{
+		Use:   "show <scope> <env-set>",
+		Short: "Show the keys belonging to a scope",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			scopeName, setName := args[0], args[1]
+			store := envset.NewStore(defaultStorePath())
+			es, err := store.Load(setName)
+			if err != nil {
+				return fmt.Errorf("load %q: %w", setName, err)
+			}
+			keys, err := envset.GetScope(es, scopeName)
+			if err != nil {
+				return fmt.Errorf("scope %q not found in %q", scopeName, setName)
+			}
+			for _, k := range keys {
+				fmt.Println(k)
+			}
+			return nil
+		},
+	}
+
+	scopeCmd.AddCommand(createCmd, listCmd, deleteCmd, showCmd)
 	rootCmd.AddCommand(scopeCmd)
 }
