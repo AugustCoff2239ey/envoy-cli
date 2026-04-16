@@ -23,27 +23,30 @@ func setupTagStore(t *testing.T) string {
 	return filepath.Join(dir, "store.json")
 }
 
+// runTagCmd executes the root command with the given args and returns the output.
+func runTagCmd(t *testing.T, args []string) string {
+	t.Helper()
+	var buf bytes.Buffer
+	rootCmd.SetOut(&buf)
+	rootCmd.SetArgs(args)
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("command %v: %v", args, err)
+	}
+	return buf.String()
+}
+
 func TestTagCmd_AddAndList(t *testing.T) {
 	storePath := setupTagStore(t)
 	t.Setenv("ENVOY_STORE", storePath)
 
-	var buf bytes.Buffer
-	rootCmd.SetOut(&buf)
-	rootCmd.SetArgs([]string{"tag", "myapp", "add", "infra", "--env", "local"})
-	if err := rootCmd.Execute(); err != nil {
-		t.Fatalf("add tag: %v", err)
-	}
-	if !strings.Contains(buf.String(), "infra") {
-		t.Errorf("expected confirmation mentioning 'infra', got: %s", buf.String())
+	out := runTagCmd(t, []string{"tag", "myapp", "add", "infra", "--env", "local"})
+	if !strings.Contains(out, "infra") {
+		t.Errorf("expected confirmation mentioning 'infra', got: %s", out)
 	}
 
-	buf.Reset()
-	rootCmd.SetArgs([]string{"tag", "myapp", "list", "--env", "local"})
-	if err := rootCmd.Execute(); err != nil {
-		t.Fatalf("list tags: %v", err)
-	}
-	if !strings.Contains(buf.String(), "infra") {
-		t.Errorf("expected 'infra' in list output, got: %s", buf.String())
+	out = runTagCmd(t, []string{"tag", "myapp", "list", "--env", "local"})
+	if !strings.Contains(out, "infra") {
+		t.Errorf("expected 'infra' in list output, got: %s", out)
 	}
 }
 
@@ -54,14 +57,9 @@ func TestTagCmd_Remove(t *testing.T) {
 	rootCmd.SetArgs([]string{"tag", "myapp", "add", "to-remove", "--env", "local"})
 	_ = rootCmd.Execute()
 
-	var buf bytes.Buffer
-	rootCmd.SetOut(&buf)
-	rootCmd.SetArgs([]string{"tag", "myapp", "remove", "to-remove", "--env", "local"})
-	if err := rootCmd.Execute(); err != nil {
-		t.Fatalf("remove tag: %v", err)
-	}
-	if !strings.Contains(buf.String(), "to-remove") {
-		t.Errorf("expected confirmation mentioning 'to-remove', got: %s", buf.String())
+	out := runTagCmd(t, []string{"tag", "myapp", "remove", "to-remove", "--env", "local"})
+	if !strings.Contains(out, "to-remove") {
+		t.Errorf("expected confirmation mentioning 'to-remove', got: %s", out)
 	}
 }
 
@@ -82,13 +80,8 @@ func TestTagCmd_ListJSON(t *testing.T) {
 	rootCmd.SetArgs([]string{"tag", "myapp", "add", "json-tag", "--env", "local"})
 	_ = rootCmd.Execute()
 
-	var buf bytes.Buffer
-	rootCmd.SetOut(&buf)
-	rootCmd.SetArgs([]string{"tag", "myapp", "list", "--env", "local", "--json"})
-	if err := rootCmd.Execute(); err != nil {
-		t.Fatalf("list json: %v", err)
-	}
-	if !strings.Contains(buf.String(), "json-tag") {
-		t.Errorf("expected JSON output with 'json-tag', got: %s", buf.String())
+	out := runTagCmd(t, []string{"tag", "myapp", "list", "--env", "local", "--json"})
+	if !strings.Contains(out, "json-tag") {
+		t.Errorf("expected JSON output with 'json-tag', got: %s", out)
 	}
 }
