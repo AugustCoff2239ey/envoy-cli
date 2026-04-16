@@ -24,6 +24,10 @@ Conflicts are resolved according to --strategy (ours|theirs|error).`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		baseName, srcName := args[0], args[1]
 
+		if baseName == srcName {
+			return fmt.Errorf("base and source env sets must be different")
+		}
+
 		st, err := envset.NewStore(storeDir())
 		if err != nil {
 			return err
@@ -38,16 +42,9 @@ Conflicts are resolved according to --strategy (ours|theirs|error).`,
 			return fmt.Errorf("loading source %q: %w", srcName, err)
 		}
 
-		var strategy envset.MergeStrategy
-		switch strings.ToLower(mergeStrategy) {
-		case "ours":
-			strategy = envset.MergeStrategyOurs
-		case "theirs":
-			strategy = envset.MergeStrategyTheirs
-		case "error":
-			strategy = envset.MergeStrategyError
-		default:
-			return fmt.Errorf("unknown strategy %q; use ours|theirs|error", mergeStrategy)
+		strategy, err := parseMergeStrategy(mergeStrategy)
+		if err != nil {
+			return err
 		}
 
 		result, err := envset.Merge(base, src, strategy)
@@ -71,6 +68,21 @@ Conflicts are resolved according to --strategy (ours|theirs|error).`,
 		fmt.Printf("merged %q + %q → %q\n", baseName, srcName, result.Merged.Name)
 		return nil
 	},
+}
+
+// parseMergeStrategy converts a strategy string to the corresponding
+// envset.MergeStrategy constant, returning an error for unknown values.
+func parseMergeStrategy(s string) (envset.MergeStrategy, error) {
+	switch strings.ToLower(s) {
+	case "ours":
+		return envset.MergeStrategyOurs, nil
+	case "theirs":
+		return envset.MergeStrategyTheirs, nil
+	case "error":
+		return envset.MergeStrategyError, nil
+	default:
+		return 0, fmt.Errorf("unknown strategy %q; use ours|theirs|error", s)
+	}
 }
 
 func init() {
