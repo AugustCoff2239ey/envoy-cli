@@ -65,6 +65,16 @@ func TestDelete(t *testing.T) {
 	}
 }
 
+func TestDelete_NonExistentKey(t *testing.T) {
+	// Deleting a key that does not exist should not panic or return an error.
+	es, _ := New("myapp", EnvLocal)
+	es.Delete("DOES_NOT_EXIST")
+	_, ok := es.Get("DOES_NOT_EXIST")
+	if ok {
+		t.Error("expected key to remain absent after deleting non-existent key")
+	}
+}
+
 func TestKeys(t *testing.T) {
 	es, _ := New("myapp", EnvStaging)
 	_ = es.Set("FOO", "1")
