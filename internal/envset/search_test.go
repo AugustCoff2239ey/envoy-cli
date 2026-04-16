@@ -94,3 +94,15 @@ func TestSearch_NoResults(t *testing.T) {
 		t.Fatalf("expected 0 results, got %d", len(results))
 	}
 }
+
+func TestSearch_CaseSensitive(t *testing.T) {
+	es := baseSearchSet(t)
+	// With case-sensitive search, lowercase "db" should not match "DB_POOL_SIZE" or "DATABASE_URL"
+	results, err := Search(es, "db", SearchOptions{CaseSensitive: true})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 0 {
+		t.Fatalf("expected 0 results for case-sensitive search, got %d", len(results))
+	}
+}
