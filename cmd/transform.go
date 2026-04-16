@@ -22,8 +22,8 @@ func init() {
 
 Built-in transforms: upper, lower, trim, reverse`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if transform == "" {
-				return fmt.Errorf("--transform is required (upper, lower, trim, reverse)")
+			if err := validateTransform(transform); err != nil {
+				return err
 			}
 
 			store, err := envset.NewStore(defaultStorePath())
@@ -66,4 +66,23 @@ Built-in transforms: upper, lower, trim, reverse`,
 	_ = transformCmd.MarkFlagRequired("name")
 
 	rootCmd.AddCommand(transformCmd)
+}
+
+// validTransforms lists the supported built-in transform names.
+var validTransforms = map[string]bool{
+	"upper":   true,
+	"lower":   true,
+	"trim":    true,
+	"reverse": true,
+}
+
+// validateTransform returns an error if the given transform name is not supported.
+func validateTransform(transform string) error {
+	if transform == "" {
+		return fmt.Errorf("--transform is required (upper, lower, trim, reverse)")
+	}
+	if !validTransforms[transform] {
+		return fmt.Errorf("unknown transform %q: must be one of upper, lower, trim, reverse", transform)
+	}
+	return nil
 }
