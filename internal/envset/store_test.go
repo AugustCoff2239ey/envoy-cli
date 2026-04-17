@@ -97,3 +97,25 @@ func TestNewStore_DefaultDir(t *testing.T) {
 		t.Error("expected BaseDir to be set")
 	}
 }
+
+func TestStore_SaveAndOverwrite(t *testing.T) {
+	s := tempStore(t)
+
+	es, _ := New("webapp", EnvStaging)
+	_ = es.Set("API_URL", "https://staging.example.com")
+	_ = s.Save(es)
+
+	// Overwrite with updated value
+	_ = es.Set("API_URL", "https://staging-v2.example.com")
+	if err := s.Save(es); err != nil {
+		t.Fatalf("Save (overwrite) failed: %v", err)
+	}
+
+	loaded, err := s.Load("webapp", EnvStaging)
+	if err != nil {
+		t.Fatalf("Load after overwrite failed: %v", err)
+	}
+	if v, ok := loaded.Get("API_URL"); !ok || v != "https://staging-v2.example.com" {
+		t.Errorf("expected updated API_URL, got %s", v)
+	}
+}
