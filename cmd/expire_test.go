@@ -50,6 +50,10 @@ func TestExpireCmd_Purge(t *testing.T) {
 	if _, ok := e2.Vars["TOKEN"]; ok {
 		t.Error("expected TOKEN to be purged")
 	}
+	// SECRET should remain untouched after purge
+	if _, ok := e2.Vars["SECRET"]; !ok {
+		t.Error("expected SECRET to remain after purge")
+	}
 }
 
 func TestExpireCmd_NotFound(t *testing.T) {
