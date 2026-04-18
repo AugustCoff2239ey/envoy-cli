@@ -73,3 +73,19 @@ func TestRename_InvalidNewName(t *testing.T) {
 		t.Error("expected error for invalid new name")
 	}
 }
+
+func TestRename_NewNameAndEnvironment(t *testing.T) {
+	store, src := baseRenameSet(t)
+	renamed, err := Rename(store, src, RenameOptions{NewName: "webapp", NewEnvironment: "production"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if renamed.Name != "webapp" || renamed.Environment != "production" {
+		t.Errorf("expected webapp/production, got %s/%s", renamed.Name, renamed.Environment)
+	}
+	// Old key should be gone.
+	_, err = store.Load("myapp", "staging")
+	if err == nil {
+		t.Error("expected old envset to be deleted")
+	}
+}
