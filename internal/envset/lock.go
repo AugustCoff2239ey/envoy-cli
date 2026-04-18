@@ -74,3 +74,18 @@ func LockedKeys(es *EnvSet) []LockEntry {
 	}
 	return entries
 }
+
+// GetLock returns the LockEntry for a key, or an error if the key is not locked.
+func GetLock(es *EnvSet, key string) (LockEntry, error) {
+	if es == nil {
+		return LockEntry{}, errors.New("envset is nil")
+	}
+	if es.Locks == nil {
+		return LockEntry{}, fmt.Errorf("key %q is not locked", key)
+	}
+	entry, locked := es.Locks[key]
+	if !locked {
+		return LockEntry{}, fmt.Errorf("key %q is not locked", key)
+	}
+	return entry, nil
+}
