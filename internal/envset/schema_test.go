@@ -109,3 +109,14 @@ func TestValidateSchema_InvalidPattern(t *testing.T) {
 		t.Error("expected error for invalid regex pattern")
 	}
 }
+
+func TestValidateSchema_EmptySchema(t *testing.T) {
+	es := baseSchemaSet(t)
+	violations, err := ValidateSchema(es, Schema{})
+	if err != nil {
+		t.Fatalf("unexpected error for empty schema: %v", err)
+	}
+	if len(violations) != 0 {
+		t.Errorf("expected no violations for empty schema, got %v", violations)
+	}
+}
