@@ -79,3 +79,14 @@ func TestExtract_NilEnvSet(t *testing.T) {
 		t.Error("expected error for nil EnvSet")
 	}
 }
+
+func TestExtract_EmptyOptions(t *testing.T) {
+	es := baseExtractSet(t)
+	res, err := Extract(es, ExtractOptions{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(res.Keys) != 0 {
+		t.Errorf("expected 0 keys with empty options, got %d", len(res.Keys))
+	}
+}
