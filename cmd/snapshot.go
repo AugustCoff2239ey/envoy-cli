@@ -50,16 +50,11 @@ func init() {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_ = restoreID
-			f, err := os.Open(args[0])
+			snap, err := loadSnapshotFile(args[0])
 			if err != nil {
-				return fmt.Errorf("cannot open snapshot file: %w", err)
+				return err
 			}
-			defer f.Close()
-			var snap envset.Snapshot
-			if err := json.NewDecoder(f).Decode(&snap); err != nil {
-				return fmt.Errorf("invalid snapshot file: %w", err)
-			}
-			es, err := envset.RestoreSnapshot(&snap)
+			es, err := envset.RestoreSnapshot(snap)
 			if err != nil {
 				return err
 			}
@@ -78,4 +73,18 @@ func init() {
 
 	snapshotCmd.AddCommand(takeCmd, restoreCmd)
 	rootCmd.AddCommand(snapshotCmd)
+}
+
+// loadSnapshotFile opens and decodes a snapshot JSON file from the given path.
+func loadSnapshotFile(path string) (*envset.Snapshot, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open snapshot file: %w", err)
+	}
+	defer f.Close()
+	var snap envset.Snapshot
+	if err := json.NewDecoder(f).Decode(&snap); err != nil {
+		return nil, fmt.Errorf("invalid snapshot file: %w", err)
+	}
+	return &snap, nil
 }
