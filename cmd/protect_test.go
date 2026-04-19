@@ -66,3 +66,20 @@ func TestProtectCmd_NotFound(t *testing.T) {
 		t.Error("expected error for missing envset")
 	}
 }
+
+func TestProtectCmd_AlreadyProtected(t *testing.T) {
+	s := setupProtectStore(t)
+	overridStore(t, s)
+
+	// Protect the key once
+	rootCmd.SetArgs([]string{"protect", "myapp", "API_KEY", "--env", "local"})
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("first protect failed: %v", err)
+	}
+
+	// Protecting the same key again should not return an error
+	rootCmd.SetArgs([]string{"protect", "myapp", "API_KEY", "--env", "local"})
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("second protect failed: %v", err)
+	}
+}
