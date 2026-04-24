@@ -19,6 +19,11 @@ package envset
 //	    log.Fatalf("integrity check failed: %v", err)
 //	}
 //
+//	// Check whether an EnvSet has been signed without verifying:
+//	if envset.IsSigned(es) {
+//	    fmt.Println("signature present")
+//	}
+//
 // Errors:
 //   - ErrSignatureMismatch  – stored signature does not match recomputed value.
 //   - ErrSignatureNotFound  – no signature has been stored on the EnvSet.
