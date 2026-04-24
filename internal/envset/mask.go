@@ -1,17 +1,16 @@
 package envset
 
 import (
-	"errors"
-	"regexp"
 	"strings"
 )
 
-var sensitivePattern = regexp.MustCompile(
-	`(?i)(password|secret|token|key|api|auth|credential|private|passphrase)`,
-)
+var sensitiveKeyPatterns = []string{
+	"SECRET", "PASSWORD", "PASSWD", "TOKEN", "API_KEY",
+	"PRIVATE_KEY", "AUTH", "CREDENTIAL", "ACCESS_KEY",
+}
 
 // MaskValue replaces all but the last 4 characters of a value with asterisks.
-// If the value is 4 characters or shorter, the entire value is masked.
+// If the value is 4 characters or fewer, it is fully masked.
 func MaskValue(value string) string {
 	if len(value) <= 4 {
 		return strings.Repeat("*", len(value))
@@ -19,60 +18,67 @@ func MaskValue(value string) string {
 	return strings.Repeat("*", len(value)-4) + value[len(value)-4:]
 }
 
-// IsSensitiveKey returns true if the key name matches common sensitive patterns.
+// IsSensitiveKey returns true if the key matches common sensitive naming patterns.
 func IsSensitiveKey(key string) bool {
-	return sensitivePattern.MatchString(key)
+	upper := strings.ToUpper(key)
+	for _, pattern := range sensitiveKeyPatterns {
+		if strings.Contains(upper, pattern) {
+			return true
+		}
+	}
+	return false
 }
 
-// MaskSensitive returns a copy of the EnvSet with sensitive values masked.
-// Only keys matching sensitive naming patterns are masked.
+// MaskSensitive masks values for all keys that match sensitive naming patterns.
+// Returns a new EnvSet with masked values; the original is unchanged.
 func MaskSensitive(es *EnvSet) (*EnvSet, error) {
 	if es == nil {
-		return nil, errors.New("envset: cannot mask nil EnvSet")
+		return nil, ErrNilEnvSet
 	}
-
-	masked := &EnvSet{
+	out := &EnvSet{
 		Name:        es.Name,
 		Environment: es.Environment,
 		Vars:        make(map[string]string, len(es.Vars)),
+		Meta:        make(map[string]string, len(es.Meta)),
 	}
-
 	for k, v := range es.Vars {
 		if IsSensitiveKey(k) {
-			masked.Vars[k] = MaskValue(v)
+			out.Vars[k] = MaskValue(v)
 		} else {
-			masked.Vars[k] = v
+			out.Vars[k] = v
 		}
 	}
-
-	return masked, nil
+	for k, v := range es.Meta {
+		out.Meta[k] = v
+	}
+	return out, nil
 }
 
-// MaskKeys returns a copy of the EnvSet with the specified keys masked,
-// regardless of whether they match sensitive patterns.
+// MaskKeys masks values for the specified keys only.
+// Returns a new EnvSet with masked values; the original is unchanged.
 func MaskKeys(es *EnvSet, keys []string) (*EnvSet, error) {
 	if es == nil {
-		return nil, errors.New("envset: cannot mask nil EnvSet")
+		return nil, ErrNilEnvSet
 	}
-
-	keySet := make(map[string]struct{}, len(keys))
+	keySet := make(map[string]bool, len(keys))
 	for _, k := range keys {
-		keySet[k] = struct{}{}
+		keySet[k] = true
 	}
-
-	masked := &EnvSet{
+	out := &EnvSet{
 		Name:        es.Name,
 		Environment: es.Environment,
 		Vars:        make(map[string]string, len(es.Vars)),
+		Meta:        make(map[string]string, len(es.Meta)),
 	}
-
 	for k, v := range es.Vars {
-		if _, ok := keySet[k]; ok {
-			masked.Vars[k] = MaskValue(v)
+		if keySet[k] {
+			out.Vars[k] = MaskValue(v)
 		} else {
-			masked.Vars[k] = v
+			out.Vars[k] = v
 		}
 	}
-
-	return masked, nil
+	for k, v := range es.Meta {
+		out.Meta[k] = v
+	}
+	return out, nil
 }
